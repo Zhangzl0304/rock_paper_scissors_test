@@ -1,2 +1,2 @@
-# bulid_a_project
-This is a demo project on how to publish a public url with github.
+# Rock Paper Scissors Test
+Show your marriage and love personality

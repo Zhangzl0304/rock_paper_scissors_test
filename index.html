@@ -1,744 +1,1092 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>构建日志 | Build Log</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        cream: '#FAFAF7',
-                        charcoal: '#1A1A1A',
-                        muted: '#6B6B6B',
-                        lime: '#00FF88',
-                        'lime-dark': '#00CC6A',
-                        border: '#E5E5E5'
-                    },
-                    fontFamily: {
-                        mono: ['JetBrains Mono', 'monospace'],
-                        sans: ['Noto Sans SC', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
-    <style>
-        * { font-family: 'Noto Sans SC', sans-serif; }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #FAFAF7; }
-        ::-webkit-scrollbar-thumb { background: #E5E5E5; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #00FF88; }
-        
-        ::selection { background: #00FF88; color: #1A1A1A; }
-        
-        .timeline-line {
-            background: linear-gradient(to bottom, transparent, #E5E5E5 5%, #E5E5E5 95%, transparent);
-        }
-        
-        .timeline-dot {
-            box-shadow: 0 0 0 4px #FAFAF7, 0 0 0 6px #00FF88;
-        }
-        
-        .metric-card:hover .metric-value {
-            color: #00FF88;
-            text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
-        }
-        
-        .project-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
-        }
-        
-        .project-card:hover .project-image {
-            transform: scale(1.02);
-        }
-        
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
-            50% { box-shadow: 0 0 0 8px rgba(0, 255, 136, 0); }
-        }
-        
-        .status-active {
-            animation: pulse-glow 2s infinite;
-        }
-        
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-in {
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-        
-        .tag:hover {
-            background: #00FF88;
-            color: #1A1A1A;
-            border-color: #00FF88;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>石剪布 · 婚恋人格测试</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+:root {
+  --bg: #0c0a09;
+  --card: #1c1917;
+  --card-hover: #292524;
+  --accent: #d97706;
+  --accent-glow: #f59e0b;
+  --text: #fafaf9;
+  --text-muted: #a8a29e;
+  --border: #44403c;
+  --stone: #94a3b8;
+  --scissors: #f87171;
+  --paper: #22d3ee;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Noto Sans SC', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 背景光斑 */
+.bg-orbs {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+.bg-orb {
+  position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.12;
+  animation: orbFloat 20s ease-in-out infinite;
+}
+.bg-orb:nth-child(1) { width:500px;height:500px;background:var(--accent);top:-10%;left:-10%;animation-delay:0s; }
+.bg-orb:nth-child(2) { width:400px;height:400px;background:var(--scissors);bottom:-10%;right:-10%;animation-delay:-7s; }
+.bg-orb:nth-child(3) { width:350px;height:350px;background:var(--paper);top:40%;left:50%;animation-delay:-14s; }
+
+@keyframes orbFloat {
+  0%,100% { transform: translate(0,0) scale(1); }
+  33% { transform: translate(40px,-30px) scale(1.1); }
+  66% { transform: translate(-30px,40px) scale(0.9); }
+}
+
+/* 页面容器 */
+.page { 
+  position: relative; z-index: 1; 
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 2rem 1rem;
+  transition: opacity 0.5s, transform 0.5s;
+}
+.page.hidden { display: none; }
+.page.fade-out { opacity: 0; transform: translateY(20px); }
+
+/* 开始页 */
+.start-title {
+  font-family: 'Noto Serif SC', serif;
+  font-size: clamp(3rem, 10vw, 6rem);
+  font-weight: 900;
+  letter-spacing: 0.3em;
+  background: linear-gradient(135deg, var(--accent-glow), var(--scissors), var(--paper));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.3;
+}
+
+.icon-trio {
+  display: flex; gap: 2rem; margin: 2.5rem 0;
+}
+.icon-trio .icon-item {
+  width: 72px; height: 72px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem; border: 2px solid var(--border);
+  transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.icon-trio .icon-item:hover {
+  transform: translateY(-4px) scale(1.1);
+}
+.icon-trio .icon-item.stone { color: var(--stone); border-color: var(--stone); }
+.icon-trio .icon-item.stone:hover { box-shadow: 0 0 24px rgba(148,163,184,0.3); }
+.icon-trio .icon-item.scissors { color: var(--scissors); border-color: var(--scissors); }
+.icon-trio .icon-item.scissors:hover { box-shadow: 0 0 24px rgba(248,113,113,0.3); }
+.icon-trio .icon-item.paper { color: var(--paper); border-color: var(--paper); }
+.icon-trio .icon-item.paper:hover { box-shadow: 0 0 24px rgba(34,211,238,0.3); }
+
+.btn-start {
+  margin-top: 1rem; padding: 1rem 3.5rem;
+  background: linear-gradient(135deg, var(--accent), #b45309);
+  color: #fff; font-size: 1.1rem; font-weight: 700;
+  border: none; border-radius: 60px; cursor: pointer;
+  transition: transform 0.25s, box-shadow 0.25s;
+  letter-spacing: 0.15em;
+}
+.btn-start:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(217,119,6,0.4);
+}
+
+/* 答题页 */
+.quiz-page { justify-content: flex-start; padding-top: 1.5rem; }
+
+.progress-bar-wrap {
+  width: 100%; max-width: 700px;
+  height: 4px; background: var(--border); border-radius: 4px;
+  margin-bottom: 1.5rem; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; width: 0%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-glow));
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.quiz-counter {
+  font-size: 0.85rem; color: var(--text-muted);
+  margin-bottom: 1rem; letter-spacing: 0.1em;
+}
+
+.quiz-card {
+  width: 100%; max-width: 700px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: opacity 0.4s, transform 0.4s;
+}
+.quiz-card.slide-out {
+  opacity: 0; transform: translateX(-60px);
+}
+.quiz-card.slide-in {
+  opacity: 0; transform: translateX(60px);
+}
+
+.quiz-image {
+  width: 100%; height: 200px;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.7) saturate(0.8);
+  transition: filter 0.4s;
+}
+.quiz-card:hover .quiz-image {
+  filter: brightness(0.8) saturate(1);
+}
+
+.quiz-body { padding: 1.5rem; }
+
+.quiz-scenario {
+  font-size: 0.85rem; color: var(--accent);
+  margin-bottom: 0.75rem; line-height: 1.6;
+  font-style: italic;
+}
+.quiz-question {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.15rem; font-weight: 700;
+  line-height: 1.8; margin-bottom: 1.5rem;
+}
+
+.options-list { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.option-btn {
+  width: 100%; text-align: left;
+  padding: 1rem 1.25rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: all 0.3s;
+  position: relative; overflow: hidden;
+}
+.option-btn::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, var(--accent), transparent);
+  opacity: 0; transition: opacity 0.4s;
+}
+.option-btn:hover {
+  border-color: var(--accent);
+  background: rgba(217,119,6,0.06);
+  transform: translateX(4px);
+}
+.option-btn:active { transform: translateX(4px) scale(0.98); }
+.option-btn.selected {
+  border-color: var(--accent);
+  background: rgba(217,119,6,0.12);
+}
+.option-btn.selected::before { opacity: 0.08; }
+
+.option-label {
+  display: inline-block; width: 24px; height: 24px;
+  border: 1.5px solid var(--text-muted); border-radius: 6px;
+  text-align: center; line-height: 24px; font-size: 0.75rem;
+  margin-right: 0.75rem; flex-shrink: 0;
+  transition: all 0.3s;
+  color: var(--text-muted);
+}
+.option-btn.selected .option-label {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.option-text-wrap { display: flex; align-items: flex-start; }
+
+/* 结果页 */
+.result-page { padding: 2rem 1rem; }
+
+.result-type-badge {
+  display: inline-flex; align-items: center; gap: 0.75rem;
+  padding: 0.75rem 2rem; border-radius: 60px;
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.5rem; font-weight: 900;
+  letter-spacing: 0.2em;
+  margin-bottom: 1.5rem;
+  border: 2px solid;
+}
+.result-type-badge.stone { color: var(--stone); border-color: var(--stone); background: rgba(148,163,184,0.08); }
+.result-type-badge.scissors { color: var(--scissors); border-color: var(--scissors); background: rgba(248,113,113,0.08); }
+.result-type-badge.paper { color: var(--paper); border-color: var(--paper); background: rgba(34,211,238,0.08); }
+.result-type-badge.mix { color: var(--accent); border-color: var(--accent); background: rgba(217,119,6,0.08); }
+
+.result-subtitle {
+  font-size: 1rem; color: var(--text-muted);
+  margin-bottom: 2.5rem; text-align: center; max-width: 500px;
+  line-height: 1.8;
+}
+
+.score-bars { width: 100%; max-width: 500px; margin-bottom: 2.5rem; }
+.score-bar-item { margin-bottom: 1rem; }
+.score-bar-label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 0.85rem; margin-bottom: 0.4rem;
+}
+.score-bar-track {
+  height: 8px; background: var(--border); border-radius: 8px; overflow: hidden;
+}
+.score-bar-value {
+  height: 100%; border-radius: 8px; width: 0%;
+  transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.score-bar-value.stone { background: linear-gradient(90deg, var(--stone), #cbd5e1); }
+.score-bar-value.scissors { background: linear-gradient(90deg, var(--scissors), #fca5a5); }
+.score-bar-value.paper { background: linear-gradient(90deg, var(--paper), #67e8f9); }
+
+.result-section {
+  width: 100%; max-width: 600px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 1.5rem; margin-bottom: 1.25rem;
+}
+.result-section h3 {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.05rem; font-weight: 700;
+  margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;
+}
+.result-section p, .result-section li {
+  font-size: 0.9rem; color: var(--text-muted); line-height: 1.9;
+}
+.result-section ul { padding-left: 1.2rem; }
+.result-section li { margin-bottom: 0.3rem; }
+
+.match-tag {
+  display: inline-block; padding: 0.3rem 0.9rem;
+  border-radius: 20px; font-size: 0.8rem; font-weight: 700;
+  margin: 0.25rem 0.25rem 0.25rem 0;
+}
+.match-tag.good { background: rgba(34,197,94,0.12); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+.match-tag.bad { background: rgba(239,68,68,0.1); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+.match-tag.warn { background: rgba(234,179,8,0.1); color: #facc15; border: 1px solid rgba(234,179,8,0.25); }
+
+.btn-restart {
+  margin-top: 1rem; padding: 0.85rem 2.5rem;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted); font-size: 0.95rem;
+  border-radius: 60px; cursor: pointer;
+  transition: all 0.3s;
+}
+.btn-restart:hover {
+  border-color: var(--accent); color: var(--accent);
+  transform: translateY(-2px);
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* 响应式 */
+@media (max-width: 640px) {
+  .start-title { letter-spacing: 0.15em; }
+  .icon-trio { gap: 1.2rem; }
+  .icon-trio .icon-item { width: 56px; height: 56px; font-size: 1.2rem; }
+  .quiz-image { height: 150px; }
+  .quiz-body { padding: 1.2rem; }
+  .quiz-question { font-size: 1.05rem; }
+  .option-btn { padding: 0.85rem 1rem; font-size: 0.9rem; }
+  .result-type-badge { font-size: 1.2rem; padding: 0.6rem 1.5rem; }
+}
+
+/* 减少动画偏好 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* toast提示 */
+.toast {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%) translateY(20px);
+  background: var(--card); border: 1px solid var(--border);
+  padding: 0.75rem 1.5rem; border-radius: 12px;
+  font-size: 0.9rem; color: var(--text);
+  opacity: 0; transition: all 0.4s; z-index: 100;
+  pointer-events: none;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
 </head>
-<body class="bg-cream text-charcoal antialiased">
-    <!-- 导航栏 -->
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-cream/90 backdrop-blur-md border-b border-border">
-        <div class="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-            <a href="#" class="flex items-center gap-2">
-                <div class="w-8 h-8 bg-charcoal rounded-lg flex items-center justify-center">
-                    <span class="text-lime font-mono text-sm font-semibold">BL</span>
-                </div>
-                <span class="font-semibold text-lg">构建日志</span>
-            </a>
-            
-            <div class="hidden md:flex items-center gap-8">
-                <a href="#timeline" class="text-sm text-muted hover:text-charcoal transition-colors">时间轴</a>
-                <a href="#updates" class="text-sm text-muted hover:text-charcoal transition-colors">每周更新</a>
-                <a href="#metrics" class="text-sm text-muted hover:text-charcoal transition-colors">指标</a>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <a href="https://github.com" target="_blank" class="w-9 h-9 rounded-lg border border-border flex items-center justify-center hover:border-lime hover:text-lime transition-all">
-                    <span class="iconify w-5 h-5" data-icon="mdi:github"></span>
-                </a>
-                <button onclick="openSubscribe()" class="hidden sm:flex items-center gap-2 px-4 py-2 bg-charcoal text-white text-sm font-medium rounded-lg hover:bg-lime hover:text-charcoal transition-all">
-                    <span class="iconify w-4 h-4" data-icon="mdi:email-outline"></span>
-                    订阅
-                </button>
-            </div>
-        </div>
-    </nav>
+<body>
 
-    <!-- Hero区域 -->
-    <section class="pt-32 pb-16 px-6">
-        <div class="max-w-5xl mx-auto">
-            <div class="max-w-2xl">
-                <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-charcoal/5 rounded-full text-xs font-medium mb-6">
-                    <span class="w-2 h-2 bg-lime rounded-full animate-pulse"></span>
-                    <span class="font-mono">正在构建中</span>
-                </div>
-                <h1 class="text-4xl md:text-5xl font-bold leading-tight mb-6">
-                    记录每一次<span class="text-lime">构建</span>，<br>分享每一份成长
-                </h1>
-                <p class="text-lg text-muted leading-relaxed mb-8">
-                    公开记录产品开发过程中的项目、实验和经验教训。<br>
-                    从想法到上线，每一步都值得被记住。
-                </p>
-                <div class="flex flex-wrap gap-3">
-                    <a href="#timeline" class="inline-flex items-center gap-2 px-6 py-3 bg-charcoal text-white font-medium rounded-lg hover:bg-lime hover:text-charcoal transition-all">
-                        浏览项目
-                        <span class="iconify w-4 h-4" data-icon="mdi:arrow-down"></span>
-                    </a>
-                    <a href="#updates" class="inline-flex items-center gap-2 px-6 py-3 border border-border font-medium rounded-lg hover:border-charcoal transition-all">
-                        查看更新
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
+<!-- 背景光斑 -->
+<div class="bg-orbs" aria-hidden="true">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+</div>
 
-    <!-- 指标面板 -->
-    <section id="metrics" class="py-12 px-6 border-y border-border bg-white/50">
-        <div class="max-w-5xl mx-auto">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                <div class="metric-card text-center p-4 rounded-xl hover:bg-white transition-all cursor-default">
-                    <div class="metric-value text-3xl md:text-4xl font-bold font-mono mb-1 transition-all" data-target="12847">0</div>
-                    <div class="text-sm text-muted">访客</div>
-                </div>
-                <div class="metric-card text-center p-4 rounded-xl hover:bg-white transition-all cursor-default">
-                    <div class="metric-value text-3xl md:text-4xl font-bold font-mono mb-1 transition-all" data-target="892">0</div>
-                    <div class="text-sm text-muted">订阅者</div>
-                </div>
-                <div class="metric-card text-center p-4 rounded-xl hover:bg-white transition-all cursor-default">
-                    <div class="metric-value text-3xl md:text-4xl font-bold font-mono mb-1 transition-all" data-target="24">0</div>
-                    <div class="text-sm text-muted">已发布项目</div>
-                </div>
-                <div class="metric-card text-center p-4 rounded-xl hover:bg-white transition-all cursor-default">
-                    <div class="metric-value text-3xl md:text-4xl font-bold font-mono mb-1 transition-all" data-target="156">0</div>
-                    <div class="text-sm text-muted">更新日志</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 时间轴 -->
-    <section id="timeline" class="py-20 px-6">
-        <div class="max-w-5xl mx-auto">
-            <div class="flex items-center justify-between mb-12">
-                <div>
-                    <h2 class="text-2xl font-bold mb-2">项目时间轴</h2>
-                    <p class="text-muted">按时间顺序展示所有项目和重要节点</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button class="filter-btn active px-3 py-1.5 text-sm font-medium rounded-lg bg-charcoal text-white" data-filter="all">全部</button>
-                    <button class="filter-btn px-3 py-1.5 text-sm font-medium rounded-lg border border-border hover:border-charcoal transition-all" data-filter="project">项目</button>
-                    <button class="filter-btn px-3 py-1.5 text-sm font-medium rounded-lg border border-border hover:border-charcoal transition-all" data-filter="post">文章</button>
-                </div>
-            </div>
-            
-            <!-- 时间轴内容 -->
-            <div class="relative">
-                <!-- 时间线 -->
-                <div class="absolute left-4 md:left-1/2 top-0 bottom-0 w-px timeline-line md:-translate-x-px"></div>
-                
-                <!-- 时间轴项目 -->
-                <div id="timeline-container" class="space-y-12">
-                    <!-- 项目1 - 左侧 -->
-                    <div class="timeline-item relative flex flex-col md:flex-row md:items-center" data-type="project">
-                        <div class="md:w-1/2 md:pr-12 md:text-right pl-12 md:pl-0">
-                            <div class="project-card bg-white rounded-xl border border-border p-5 text-left cursor-pointer transition-all" onclick="openProject(0)">
-                                <div class="overflow-hidden rounded-lg mb-4">
-                                    <img src="https://picsum.photos/seed/taskflow/600/400" alt="TaskFlow" class="project-image w-full h-40 object-cover transition-transform duration-500">
-                                </div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <span class="px-2 py-0.5 bg-lime/20 text-lime-dark text-xs font-medium rounded-full flex items-center gap-1">
-                                        <span class="w-1.5 h-1.5 bg-lime rounded-full status-active"></span>
-                                        进行中
-                                    </span>
-                                    <span class="text-xs text-muted font-mono">v2.1.0</span>
-                                </div>
-                                <h3 class="font-semibold text-lg mb-2">TaskFlow Pro</h3>
-                                <p class="text-sm text-muted mb-4">一款注重效率的任务管理工具，支持拖拽排序、时间追踪和团队协作。</p>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">React</span>
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">TypeScript</span>
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">Supabase</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="absolute left-4 md:left-1/2 w-3 h-3 bg-lime rounded-full timeline-dot -translate-x-1/2"></div>
-                        <div class="md:w-1/2 md:pl-12 pl-12 mt-3 md:mt-0">
-                            <span class="font-mono text-sm text-muted">2024年12月</span>
-                        </div>
-                    </div>
-                    
-                    <!-- 文章1 - 右侧 -->
-                    <div class="timeline-item relative flex flex-col md:flex-row md:items-center" data-type="post">
-                        <div class="md:w-1/2 md:pr-12 md:text-right pl-12 md:pl-0 md:order-1 order-2">
-                            <span class="font-mono text-sm text-muted">2024年11月</span>
-                        </div>
-                        <div class="absolute left-4 md:left-1/2 w-3 h-3 bg-charcoal rounded-full timeline-dot -translate-x-1/2" style="box-shadow: 0 0 0 4px #FAFAF7, 0 0 0 6px #1A1A1A;"></div>
-                        <div class="md:w-1/2 md:pl-12 pl-12 md:order-2 order-1 mb-3 md:mb-0">
-                            <div class="project-card bg-white rounded-xl border border-border p-5 cursor-pointer transition-all">
-                                <span class="inline-block px-2 py-0.5 bg-charcoal/5 text-xs font-medium rounded mb-3">经验分享</span>
-                                <h3 class="font-semibold text-lg mb-2">从0到1：独立开发者的第一年收入复盘</h3>
-                                <p class="text-sm text-muted">分享我作为独立开发者第一年的收入、支出和最重要的经验教训...</p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 项目2 - 左侧 -->
-                    <div class="timeline-item relative flex flex-col md:flex-row md:items-center" data-type="project">
-                        <div class="md:w-1/2 md:pr-12 md:text-right pl-12 md:pl-0">
-                            <div class="project-card bg-white rounded-xl border border-border p-5 text-left cursor-pointer transition-all" onclick="openProject(1)">
-                                <div class="overflow-hidden rounded-lg mb-4">
-                                    <img src="https://picsum.photos/seed/devtools/600/400" alt="DevTools" class="project-image w-full h-40 object-cover transition-transform duration-500">
-                                </div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <span class="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs font-medium rounded-full">已完成</span>
-                                    <span class="text-xs text-muted font-mono">v1.0.0</span>
-                                </div>
-                                <h3 class="font-semibold text-lg mb-2">DevTools Hub</h3>
-                                <p class="text-sm text-muted mb-4">开发者工具集合，包含JSON格式化、正则测试、编码转换等20+工具。</p>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">Vue 3</span>
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">Vite</span>
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">PWA</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="absolute left-4 md:left-1/2 w-3 h-3 bg-lime rounded-full timeline-dot -translate-x-1/2"></div>
-                        <div class="md:w-1/2 md:pl-12 pl-12 mt-3 md:mt-0">
-                            <span class="font-mono text-sm text-muted">2024年9月</span>
-                        </div>
-                    </div>
-                    
-                    <!-- 项目3 - 右侧 -->
-                    <div class="timeline-item relative flex flex-col md:flex-row md:items-center" data-type="project">
-                        <div class="md:w-1/2 md:pr-12 md:text-right pl-12 md:pl-0 md:order-1 order-2">
-                            <span class="font-mono text-sm text-muted">2024年7月</span>
-                        </div>
-                        <div class="absolute left-4 md:left-1/2 w-3 h-3 bg-lime rounded-full timeline-dot -translate-x-1/2"></div>
-                        <div class="md:w-1/2 md:pl-12 pl-12 md:order-2 order-1 mb-3 md:mb-0">
-                            <div class="project-card bg-white rounded-xl border border-border p-5 cursor-pointer transition-all" onclick="openProject(2)">
-                                <div class="overflow-hidden rounded-lg mb-4">
-                                    <img src="https://picsum.photos/seed/newsletter/600/400" alt="Newsletter" class="project-image w-full h-40 object-cover transition-transform duration-500">
-                                </div>
-                                <div class="flex items-center gap-2 mb-3">
-                                    <span class="px-2 py-0.5 bg-orange-50 text-orange-600 text-xs font-medium rounded-full">维护中</span>
-                                    <span class="text-xs text-muted font-mono">v1.2.3</span>
-                                </div>
-                                <h3 class="font-semibold text-lg mb-2">周刊订阅系统</h3>
-                                <p class="text-sm text-muted mb-4">开源的邮件订阅系统，支持Markdown编辑、定时发送和数据分析。</p>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">Next.js</span>
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">Prisma</span>
-                                    <span class="tag px-2 py-0.5 text-xs border border-border rounded transition-all">Resend</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- 文章2 - 左侧 -->
-                    <div class="timeline-item relative flex flex-col md:flex-row md:items-center" data-type="post">
-                        <div class="md:w-1/2 md:pr-12 md:text-right pl-12 md:pl-0">
-                            <div class="project-card bg-white rounded-xl border border-border p-5 text-left cursor-pointer transition-all">
-                                <span class="inline-block px-2 py-0.5 bg-charcoal/5 text-xs font-medium rounded mb-3">技术教程</span>
-                                <h3 class="font-semibold text-lg mb-2">使用Supabase构建无服务器应用</h3>
-                                <p class="text-sm text-muted">详解如何利用Supabase快速搭建后端服务，降低开发成本...</p>
-                            </div>
-                        </div>
-                        <div class="absolute left-4 md:left-1/2 w-3 h-3 bg-charcoal rounded-full timeline-dot -translate-x-1/2" style="box-shadow: 0 0 0 4px #FAFAF7, 0 0 0 6px #1A1A1A;"></div>
-                        <div class="md:w-1/2 md:pl-12 pl-12 mt-3 md:mt-0">
-                            <span class="font-mono text-sm text-muted">2024年5月</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 每周更新 -->
-    <section id="updates" class="py-20 px-6 bg-charcoal text-white">
-        <div class="max-w-5xl mx-auto">
-            <div class="flex items-center justify-between mb-12">
-                <div>
-                    <h2 class="text-2xl font-bold mb-2">每周更新</h2>
-                    <p class="text-white/60">记录每周的开发进度和思考</p>
-                </div>
-                <a href="#" class="text-lime text-sm font-medium hover:underline flex items-center gap-1">
-                    查看全部
-                    <span class="iconify w-4 h-4" data-icon="mdi:arrow-right"></span>
-                </a>
-            </div>
-            
-            <div class="space-y-4">
-                <!-- 更新条目 -->
-                <div class="update-item group p-6 bg-white/5 rounded-xl border border-white/10 hover:border-lime/30 transition-all cursor-pointer">
-                    <div class="flex flex-col md:flex-row md:items-center gap-4">
-                        <div class="flex-shrink-0">
-                            <span class="font-mono text-lime text-sm">W50</span>
-                            <span class="text-white/40 text-sm ml-2">2024.12.09 - 12.15</span>
-                        </div>
-                        <div class="flex-grow">
-                            <h3 class="font-semibold mb-2 group-hover:text-lime transition-colors">TaskFlow 2.1 重构完成，新增团队协作功能</h3>
-                            <ul class="text-sm text-white/60 space-y-1">
-                                <li class="flex items-center gap-2">
-                                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                                    完成看板视图拖拽重构，性能提升40%
-                                </li>
-                                <li class="flex items-center gap-2">
-                                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                                    新增实时协作编辑功能
-                                </li>
-                                <li class="flex items-center gap-2">
-                                    <span class="iconify w-4 h-4 text-yellow-400" data-icon="mdi:progress-clock"></span>
-                                    移动端适配进行中，预计下周完成
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="iconify w-5 h-5 text-white/30 group-hover:text-lime group-hover:translate-x-1 transition-all" data-icon="mdi:chevron-right"></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="update-item group p-6 bg-white/5 rounded-xl border border-white/10 hover:border-lime/30 transition-all cursor-pointer">
-                    <div class="flex flex-col md:flex-row md:items-center gap-4">
-                        <div class="flex-shrink-0">
-                            <span class="font-mono text-lime text-sm">W49</span>
-                            <span class="text-white/40 text-sm ml-2">2024.12.02 - 12.08</span>
-                        </div>
-                        <div class="flex-grow">
-                            <h3 class="font-semibold mb-2 group-hover:text-lime transition-colors">数据库迁移至Supabase，成本降低60%</h3>
-                            <ul class="text-sm text-white/60 space-y-1">
-                                <li class="flex items-center gap-2">
-                                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                                    完成三个项目的数据库迁移
-                                </li>
-                                <li class="flex items-center gap-2">
-                                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                                    编写迁移文档和最佳实践
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="iconify w-5 h-5 text-white/30 group-hover:text-lime group-hover:translate-x-1 transition-all" data-icon="mdi:chevron-right"></span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="update-item group p-6 bg-white/5 rounded-xl border border-white/10 hover:border-lime/30 transition-all cursor-pointer">
-                    <div class="flex flex-col md:flex-row md:items-center gap-4">
-                        <div class="flex-shrink-0">
-                            <span class="font-mono text-lime text-sm">W48</span>
-                            <span class="text-white/40 text-sm ml-2">2024.11.25 - 12.01</span>
-                        </div>
-                        <div class="flex-grow">
-                            <h3 class="font-semibold mb-2 group-hover:text-lime transition-colors">博客系统重构，加载速度提升2倍</h3>
-                            <ul class="text-sm text-white/60 space-y-1">
-                                <li class="flex items-center gap-2">
-                                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                                    从Next.js迁移到Astro
-                                </li>
-                                <li class="flex items-center gap-2">
-                                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                                    实现增量静态生成
-                                </li>
-                                <li class="flex items-center gap-2">
-                                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                                    Core Web Vitals全部达到绿色
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="iconify w-5 h-5 text-white/30 group-hover:text-lime group-hover:translate-x-1 transition-all" data-icon="mdi:chevron-right"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- 订阅CTA -->
-    <section class="py-20 px-6">
-        <div class="max-w-3xl mx-auto text-center">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-lime/10 rounded-full text-xs font-medium text-lime-dark mb-6">
-                <span class="iconify w-4 h-4" data-icon="mdi:email-heart-outline"></span>
-                每周精选直达邮箱
-            </div>
-            <h2 class="text-3xl font-bold mb-4">不错过任何更新</h2>
-            <p class="text-muted mb-8">订阅周刊，获取最新项目动态、技术文章和独立开发心得。</p>
-            
-            <form class="flex flex-col sm:flex-row gap-3 max-w-md mx-auto mb-8">
-                <input type="email" placeholder="输入你的邮箱" class="flex-grow px-4 py-3 bg-white border border-border rounded-lg focus:outline-none focus:border-lime transition-all">
-                <button type="submit" class="flex-shrink-0 px-6 py-3 bg-charcoal text-white font-medium rounded-lg hover:bg-lime hover:text-charcoal transition-all">
-                    订阅周刊
-                </button>
-            </form>
-            
-            <div class="flex items-center justify-center gap-6 text-sm text-muted">
-                <span class="flex items-center gap-1.5">
-                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                    每周一封
-                </span>
-                <span class="flex items-center gap-1.5">
-                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                    无垃圾邮件
-                </span>
-                <span class="flex items-center gap-1.5">
-                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                    随时退订
-                </span>
-            </div>
-        </div>
-    </section>
-
-    <!-- 页脚 -->
-    <footer class="py-12 px-6 border-t border-border">
-        <div class="max-w-5xl mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="flex items-center gap-6">
-                    <div class="flex items-center gap-2">
-                        <div class="w-6 h-6 bg-charcoal rounded flex items-center justify-center">
-                            <span class="text-lime font-mono text-xs font-semibold">BL</span>
-                        </div>
-                        <span class="font-medium">构建日志</span>
-                    </div>
-                    <span class="text-sm text-muted">© 2024 保留所有权利</span>
-                </div>
-                
-                <div class="flex items-center gap-6">
-                    <a href="#" class="text-sm text-muted hover:text-charcoal transition-colors">关于</a>
-                    <a href="#" class="text-sm text-muted hover:text-charcoal transition-colors">RSS</a>
-                    <a href="mailto:hello@buildlog.dev" class="text-sm text-muted hover:text-charcoal transition-colors">联系</a>
-                    <a href="https://github.com" target="_blank" class="text-muted hover:text-charcoal transition-colors">
-                        <span class="iconify w-5 h-5" data-icon="mdi:github"></span>
-                    </a>
-                </div>
-            </div>
-            
-            <div class="mt-6 pt-6 border-t border-border text-center">
-                <p class="text-xs text-muted">
-                    本站内容采用 <a href="#" class="underline hover:text-charcoal">CC BY-NC-SA 4.0</a> 许可协议 · 使用 Tailwind CSS 构建 · 托管于 Vercel
-                </p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- 项目详情模态框 -->
-    <div id="project-modal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-charcoal/50 backdrop-blur-sm" onclick="closeProject()"></div>
-        <div class="absolute inset-4 md:inset-10 bg-cream rounded-2xl overflow-hidden flex flex-col">
-            <div class="flex items-center justify-between p-4 border-b border-border">
-                <span class="font-mono text-sm text-muted">项目详情</span>
-                <button onclick="closeProject()" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-charcoal/5 transition-all">
-                    <span class="iconify w-5 h-5" data-icon="mdi:close"></span>
-                </button>
-            </div>
-            <div id="project-content" class="flex-grow overflow-y-auto p-6 md:p-10">
-                <!-- 动态内容 -->
-            </div>
-        </div>
+<!-- 开始页 -->
+<section id="startPage" class="page" role="main">
+  <div class="text-center">
+    <div class="icon-trio justify-center flex">
+      <div class="icon-item stone" title="石头"><i class="fas fa-mountain"></i></div>
+      <div class="icon-item scissors" title="剪刀"><i class="fas fa-scissors"></i></div>
+      <div class="icon-item paper" title="布"><i class="fas fa-scroll"></i></div>
     </div>
+    <h1 class="start-title">石剪布</h1>
+    <p style="color:var(--text-muted); margin-top:0.75rem; font-size:1.05rem; letter-spacing:0.15em;">
+      你的婚恋人格，是什么形状？
+    </p>
+    <p style="color:var(--text-muted); margin-top:1.5rem; font-size:0.85rem; max-width:420px; line-height:1.9; opacity:0.7;">
+      这不是普通的性格测试。我们为你准备了30个充满戏剧张力的情感场景——在这些至暗与高光时刻里，你的本能反应将出卖你真正的婚恋人格。准备好了吗？
+    </p>
+    <button class="btn-start" onclick="startQuiz()" aria-label="开始测试">
+      开始测试
+    </button>
+    <p style="color:var(--text-muted); margin-top:1rem; font-size:0.75rem; opacity:0.5;">
+      共 30 题 · 约 5-8 分钟 · 结果仅供参考
+    </p>
+  </div>
+</section>
 
-    <!-- 订阅模态框 -->
-    <div id="subscribe-modal" class="fixed inset-0 z-50 hidden">
-        <div class="absolute inset-0 bg-charcoal/50 backdrop-blur-sm" onclick="closeSubscribe()"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md p-6 bg-cream rounded-2xl">
-            <div class="text-center mb-6">
-                <div class="w-12 h-12 bg-lime/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span class="iconify w-6 h-6 text-lime" data-icon="mdi:email-heart"></span>
-                </div>
-                <h3 class="text-xl font-bold mb-2">订阅构建日志</h3>
-                <p class="text-sm text-muted">每周精选内容，直接发送到你的邮箱</p>
-            </div>
-            <form class="space-y-3">
-                <input type="email" placeholder="your@email.com" class="w-full px-4 py-3 bg-white border border-border rounded-lg focus:outline-none focus:border-lime transition-all">
-                <button type="submit" class="w-full py-3 bg-charcoal text-white font-medium rounded-lg hover:bg-lime hover:text-charcoal transition-all">
-                    确认订阅
-                </button>
-            </form>
-            <button onclick="closeSubscribe()" class="w-full mt-4 text-sm text-muted hover:text-charcoal transition-colors">
-                暂不订阅
-            </button>
-        </div>
+<!-- 答题页 -->
+<section id="quizPage" class="page quiz-page hidden" role="main" aria-live="polite">
+  <div class="progress-bar-wrap" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+    <div class="progress-bar-fill" id="progressFill"></div>
+  </div>
+  <div class="quiz-counter" id="quizCounter"></div>
+  <div class="quiz-card" id="quizCard">
+    <img class="quiz-image" id="quizImage" alt="场景插图" loading="eager">
+    <div class="quiz-body">
+      <p class="quiz-scenario" id="quizScenario"></p>
+      <p class="quiz-question" id="quizQuestion"></p>
+      <div class="options-list" id="optionsList"></div>
     </div>
+  </div>
+</section>
 
-    <script>
-        // 项目数据
-        const projects = [
-            {
-                title: 'TaskFlow Pro',
-                version: 'v2.1.0',
-                status: '进行中',
-                statusColor: 'lime',
-                description: '一款注重效率的任务管理工具，支持拖拽排序、时间追踪和团队协作。',
-                longDescription: 'TaskFlow Pro 是我正在开发的旗舰产品，旨在帮助个人和团队更好地管理任务和时间。项目采用现代化的技术栈，专注于用户体验和性能优化。',
-                image: 'https://picsum.photos/seed/taskflow/1200/600',
-                screenshots: [
-                    'https://picsum.photos/seed/taskflow1/800/500',
-                    'https://picsum.photos/seed/taskflow2/800/500',
-                    'https://picsum.photos/seed/taskflow3/800/500'
-                ],
-                stack: ['React', 'TypeScript', 'Supabase', 'Tailwind CSS', 'Framer Motion'],
-                features: ['拖拽式任务管理', '实时协作', '时间追踪', '数据统计', '移动端适配'],
-                github: 'https://github.com',
-                demo: 'https://taskflow.dev',
-                date: '2024年12月'
-            },
-            {
-                title: 'DevTools Hub',
-                version: 'v1.0.0',
-                status: '已完成',
-                statusColor: 'blue',
-                description: '开发者工具集合，包含JSON格式化、正则测试、编码转换等20+工具。',
-                longDescription: 'DevTools Hub 是一个离线可用的开发者工具集合，所有工具都在浏览器本地运行，保护用户隐私。项目已稳定运行6个月，月活用户超过5000。',
-                image: 'https://picsum.photos/seed/devtools/1200/600',
-                screenshots: [
-                    'https://picsum.photos/seed/devtools1/800/500',
-                    'https://picsum.photos/seed/devtools2/800/500'
-                ],
-                stack: ['Vue 3', 'Vite', 'PWA', 'Monaco Editor'],
-                features: ['20+ 开发工具', '离线可用', '本地存储', '暗色模式'],
-                github: 'https://github.com',
-                demo: 'https://devtools.hub',
-                date: '2024年9月'
-            },
-            {
-                title: '周刊订阅系统',
-                version: 'v1.2.3',
-                status: '维护中',
-                statusColor: 'orange',
-                description: '开源的邮件订阅系统，支持Markdown编辑、定时发送和数据分析。',
-                longDescription: '这是一个开源的邮件订阅解决方案，专为独立开发者和小团队设计。系统支持Markdown编辑、邮件模板、定时发送、打开率追踪等功能。',
-                image: 'https://picsum.photos/seed/newsletter/1200/600',
-                screenshots: [
-                    'https://picsum.photos/seed/newsletter1/800/500',
-                    'https://picsum.photos/seed/newsletter2/800/500'
-                ],
-                stack: ['Next.js', 'Prisma', 'PostgreSQL', 'Resend', 'Tailwind CSS'],
-                features: ['Markdown编辑器', '邮件模板', '定时发送', '数据分析', '订阅管理'],
-                github: 'https://github.com',
-                demo: 'https://newsletter.sys',
-                date: '2024年7月'
-            }
-        ];
+<!-- 结果页 -->
+<section id="resultPage" class="page result-page hidden" role="main">
+  <div class="text-center flex flex-col items-center" id="resultContent">
+    <!-- 动态填充 -->
+  </div>
+</section>
 
-        // 打开项目详情
-        function openProject(index) {
-            const project = projects[index];
-            const modal = document.getElementById('project-modal');
-            const content = document.getElementById('project-content');
-            
-            const statusColors = {
-                lime: 'bg-lime/20 text-lime-dark',
-                blue: 'bg-blue-50 text-blue-600',
-                orange: 'bg-orange-50 text-orange-600'
-            };
-            
-            content.innerHTML = `
-                <div class="max-w-4xl mx-auto">
-                    <div class="mb-8">
-                        <img src="${project.image}" alt="${project.title}" class="w-full h-64 md:h-80 object-cover rounded-xl mb-6">
-                        <div class="flex flex-wrap items-center gap-3 mb-4">
-                            <span class="px-3 py-1 ${statusColors[project.statusColor]} text-sm font-medium rounded-full flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 bg-current rounded-full ${project.statusColor === 'lime' ? 'status-active' : ''}"></span>
-                                ${project.status}
-                            </span>
-                            <span class="font-mono text-sm text-muted">${project.version}</span>
-                            <span class="text-sm text-muted">·</span>
-                            <span class="text-sm text-muted">${project.date}</span>
-                        </div>
-                        <h2 class="text-3xl font-bold mb-4">${project.title}</h2>
-                        <p class="text-lg text-muted">${project.longDescription}</p>
-                    </div>
-                    
-                    <div class="mb-8">
-                        <h3 class="font-semibold mb-3">技术栈</h3>
-                        <div class="flex flex-wrap gap-2">
-                            ${project.stack.map(s => `<span class="px-3 py-1.5 bg-charcoal/5 text-sm rounded-lg">${s}</span>`).join('')}
-                        </div>
-                    </div>
-                    
-                    <div class="mb-8">
-                        <h3 class="font-semibold mb-3">核心功能</h3>
-                        <ul class="grid md:grid-cols-2 gap-2">
-                            ${project.features.map(f => `
-                                <li class="flex items-center gap-2 text-muted">
-                                    <span class="iconify w-4 h-4 text-lime" data-icon="mdi:check-circle"></span>
-                                    ${f}
-                                </li>
-                            `).join('')}
-                        </ul>
-                    </div>
-                    
-                    <div class="mb-8">
-                        <h3 class="font-semibold mb-3">截图</h3>
-                        <div class="grid md:grid-cols-2 gap-4">
-                            ${project.screenshots.map(s => `
-                                <img src="${s}" alt="Screenshot" class="w-full h-48 object-cover rounded-lg border border-border">
-                            `).join('')}
-                        </div>
-                    </div>
-                    
-                    <div class="flex flex-wrap gap-3">
-                        <a href="${project.demo}" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-charcoal text-white font-medium rounded-lg hover:bg-lime hover:text-charcoal transition-all">
-                            <span class="iconify w-4 h-4" data-icon="mdi:open-in-new"></span>
-                            查看演示
-                        </a>
-                        <a href="${project.github}" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 border border-border font-medium rounded-lg hover:border-charcoal transition-all">
-                            <span class="iconify w-4 h-4" data-icon="mdi:github"></span>
-                            GitHub
-                        </a>
-                    </div>
-                </div>
-            `;
-            
-            modal.classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
-        // 关闭项目详情
-        function closeProject() {
-            document.getElementById('project-modal').classList.add('hidden');
-            document.body.style.overflow = '';
-        }
+<script>
+// ==================== 题目数据 ====================
+// 格式：[场景, 问题, [[选项文字, 石头分, 剪刀分, 布分], ...], 图片seed]
+const questions = [
+  [
+    "你和另一半正在举行婚礼，交换戒指的那一刻，你余光瞥到角落里坐着伴侣的前任，对方正用一种意味深长的微笑看着你们。",
+    "你的第一反应是——",
+    [
+      ["根本不在意，继续专注完成仪式，这个人不配影响今天", 2, 0, 0],
+      ["礼成后故意走过去，优雅地递上一杯酒：'谢谢来见证我们的幸福'", 0, 2, 0],
+      ["心里有一丝不舒服，但告诉自己今天最重要的人就在身边", 0, 0, 2],
+      ["悄悄观察伴侣是否注意到了，看对方的反应再做判断", 1, 1, 0]
+    ],
+    "ceremony42"
+  ],
+  [
+    "你正和伴侣温馨地窝在沙发上看电影，手机突然响了——是一个异性朋友，对方在电话那头哭得稀里哗啦说自己失恋了。伴侣看向你，眼神里有询问的意思。",
+    "你会怎么做？",
+    [
+      ["'你去接吧，我在旁边等你。'然后继续看电影，不干涉", 2, 0, 0],
+      ["'嗯，你接吧。'但语气和眼神都带着一丝不易察觉的冷意", 0, 2, 0],
+      ["主动说'你开免提吧，我帮你一起安慰ta'", 0, 0, 2],
+      ["'这么晚了打电话来哭，你觉得合适吗？'直接表达不满", 1, 1, 0]
+    ],
+    "nightphone7"
+  ],
+  [
+    "伴侣出差外地，发来一张和同事的聚餐合照。但照片里有个异性靠得特别近，发丝都快贴在一起了。伴侣配文：'团建好开心~'",
+    "你的反应是？",
+    [
+      ["直接回复一个问号，等对方自己解释，不主动加戏", 2, 0, 0],
+      ["点赞，然后评论'同事关系真好啊~'加一个微笑表情", 0, 2, 0],
+      ["什么都不说，但那天晚上翻来覆去睡不着，反复放大那张照片", 0, 0, 2],
+      ["打电话过去笑着说'看起来玩得很开心嘛'，语气里暗藏玄机", 1, 1, 0]
+    ],
+    "dinner88"
+  ],
+  [
+    "你们因为一件小事大吵一架，伴侣摔门而出，一整天没回消息。晚上11点，你看到手机屏幕还是安静的。",
+    "你会——",
+    [
+      ["继续做自己的事，不主动联系，等对方冷静了自然会回来", 2, 0, 0],
+      ["发一条朋友圈'有些人失踪技能点满了'，设置仅对方可见", 0, 2, 0],
+      ["疯狂发消息打电话，直到联系上为止，不然根本没法安心", 0, 0, 2],
+      ["发一条简短的消息'注意安全，回来再说'，然后放下手机", 1, 0, 1]
+    ],
+    "door55"
+  ],
+  [
+    "你期待了很久的生日终于到了。伴侣神秘兮兮地递上礼物盒，你满怀期待地打开——里面是一个完全不是你风格的巨大毛绒熊。你喜欢文艺极简，这个熊占满了半个沙发。",
+    "打开那一刻——",
+    [
+      ["笑着说谢谢，然后真诚地问'你为什么选这个呀？我想听听你的想法'", 2, 0, 0],
+      ["表情微变了一瞬，但很快笑着说出一句恰到好处的玩笑化解尴尬", 0, 2, 0],
+      ["开心地抱住毛绒熊说'好可爱！'，回家关上门后再悄悄失落", 0, 0, 2],
+      ["直接说'这个不太适合我，下次咱们一起挑吧'", 1, 1, 0]
+    ],
+    "gift99"
+  ],
+  [
+    "你最好的朋友拉你到一边，表情严肃地说：'我觉得你对象不太对劲，上次我看到ta在商场和一个异性举止很亲密……'描述了一个让你心里咯噔一下的场景。",
+    "你的反应是？",
+    [
+      ["'你说具体点，有时间地点吗？我需要的是事实，不是感觉'", 2, 0, 0],
+      ["'谢谢你告诉我，但我的感情我自己有数。'语气平静但不容质疑", 0, 2, 0],
+      ["当场心慌，回去后反复琢磨朋友说的每一个细节，越想越焦虑", 0, 0, 2],
+      ["表面淡定地说'知道了'，但暗地里开始留意伴侣的行踪", 1, 1, 0]
+    ],
+    "whisper33"
+  ],
+  [
+    "你单身时的前任突然通过某平台找到了你的新微信号，发来一句：'好久不见，最近还好吗？'而你现在有对象。",
+    "你会怎么处理？",
+    [
+      ["不回复，直接删除，不需要多余的动作", 2, 0, 0],
+      ["回复'挺好的，你呢？'然后自然地聊几句，你觉得自己问心无愧", 0, 2, 0],
+      ["截图发给现任，问'你觉得我该怎么回？'把处理权交给对方", 0, 0, 2],
+      ["回复'我挺好的，不过我现在有对象了，就不多聊了'干脆利落", 1, 0, 1]
+    ],
+    "message21"
+  ],
+  [
+    "伴侣的异性好朋友遇到急事想借一笔不小的钱。伴侣来跟你商量——但你清楚地知道，那个异性曾经对伴侣表过白。",
+    "你的态度是——",
+    [
+      ["'不行，钱可以借别人，这个人不行。'没有商量的余地", 2, 0, 0],
+      ["'借啊，借了才知道ta到底怎么想的，也看看你的态度。'", 0, 2, 0],
+      ["'如果你觉得ta真的需要帮助的话……那好吧'", 0, 0, 2],
+      ["'可以借，但你要当面写借条，全程我在场。'", 1, 1, 0]
+    ],
+    "money77"
+  ],
+  [
+    "伴侣带你去见家长。饭桌上，伴侣的妈妈突然笑着说：'你学历是本科吧？我家孩子之前谈的那个可是硕士呢。'满桌人安静了一秒。",
+    "而你注意到伴侣——没有说话。",
+    [
+      ["自己直接笑着回应'阿姨，学历不能代表一切，日子是两个人过的'", 2, 0, 0],
+      ["笑着接话'是啊，但您孩子最终选的是我呀~'温柔中带着锋芒", 0, 2, 0],
+      ["低着头不说话，默默扒饭，假装没听到", 0, 0, 2],
+      ["看向伴侣，用眼神示意对方出面，如果对方还不说话再自己开口", 1, 0, 1]
+    ],
+    "family44"
+  ],
+  [
+    "你们一直互相知道对方手机密码。某天你无意间发现伴侣改了密码，当你自然地问起时，伴侣说'就是想换个密码而已'。",
+    "你会——",
+    [
+      ["'你改密码了？为什么？'直接要一个合理的解释", 2, 0, 0],
+      ["'哦，改了啊。'不再追问，但心里开始默默盘算这件事", 0, 2, 0],
+      ["'是不是我哪里做得不好？你是不是有什么不想让我看到的？'开始自我怀疑", 0, 0, 2],
+      ["笑着说'行，隐私自由嘛'，但暗暗记下了这个时间点", 1, 1, 0]
+    ],
+    "lock66"
+  ],
+  [
+    "你发高烧39度，浑身难受得像被碾过，给伴侣发了消息。过了半小时，伴侣回复：'多喝热水，我这边走不开。'",
+    "你——",
+    [
+      ["'行，那你忙。'然后自己打车去医院，不指望任何人", 2, 0, 0],
+      ["发一个搞笑表情包'行，我自己扛，习惯了'让对方自己体会", 0, 2, 0],
+      ["'可是我真的好难受……你能不能来看看我？'直接表达脆弱", 0, 0, 2],
+      ["不再回复，等伴侣自己意识到不对劲。如果等不到，这件事会记在心里", 1, 0, 1]
+    ],
+    "sick12"
+  ],
+  [
+    "伴侣拿到一个很棒的工作offer，但在另一个城市。伴侣看着你说：'为了你，我可以不去。'你心里清楚这个机会有多难得。",
+    "你会怎么说？",
+    [
+      ["'你必须去，感情不应该成为你的枷锁。'", 2, 0, 0],
+      ["'你真的愿意为我放弃吗？我怕你以后会后悔，会怪我。'", 0, 2, 0],
+      ["'你别去好不好？我舍不得你走……'眼泪先于理智掉下来", 0, 0, 2],
+      ["'我们可以先试试异地，你先去适应一下再说，不用这么快做决定'", 1, 0, 1]
+    ],
+    "journey50"
+  ],
+  [
+    "最近一周，伴侣对你不冷不热，消息回得越来越慢，以前秒回现在要几个小时。但当你问'怎么了'时，对方只说'没什么，就是忙'。",
+    "你怎么办？",
+    [
+      ["直接问：'你到底怎么了？有话直说，我不喜欢猜。'", 2, 0, 0],
+      ["也开始冷淡，比对方更冷，看谁先忍不住。你不信自己会先低头", 0, 2, 0],
+      ["开始反复反思自己最近是不是做错了什么，越想越焦虑", 0, 0, 2],
+      ["找个合适的时间，认真地说'我们需要谈一谈'，不急不躁", 1, 0, 1]
+    ],
+    "cold28"
+  ],
+  [
+    "在一个朋友聚会上，有个不太熟的人突然当众向你表白，手里还拿着花。而你是有对象的。所有人的目光唰地集中在你身上。",
+    "你——",
+    [
+      ["'谢谢，但我有对象了。'干脆利落，两秒钟结束这个场面", 2, 0, 0],
+      ["'哇，好意外~不过你来晚了一步呢'开着玩笑化解，不让任何人难堪", 0, 2, 0],
+      ["脸红到脖子根，结结巴巴地说不出一句完整的话", 0, 0, 2],
+      ["'私下聊吧。'把对方拉到一边，再认真拒绝", 1, 0, 1]
+    ],
+    "confession15"
+  ],
+  [
+    "你们计划一次旅行，你想去海边躺平放松，伴侣偏要去爬山。双方都不让步，气氛从讨论变成了沉默对抗。",
+    "你怎么办？",
+    [
+      ["'那就分开旅行吧，各去各的，没必要绑在一起。'", 2, 0, 0],
+      ["'要不这样，先爬山后海边？谁先让一步，今晚谁请客。'用游戏化解", 0, 2, 0],
+      ["'好吧……去爬山吧，你开心就好。'心里有一丝委屈但说了出口", 0, 0, 2],
+      ["'我们列个优缺点清单，理性分析一下哪个方案更合理。'", 1, 1, 0]
+    ],
+    "travel73"
+  ],
+  [
+    "伴侣看到你精心搭配了一小时的衣服，皱了皱眉说：'你穿这个出门？不太好看吧。'而你马上就要赴一个重要的约会。",
+    "你会——",
+    [
+      ["'我觉得好看就行。'照穿不误，头也不回地出门", 2, 0, 0],
+      ["'那你觉得我穿什么好看？哦等等，我为什么要在意你的评价？'笑着怼回去", 0, 2, 0],
+      ["犹豫了一下，默默回房间换了衣服", 0, 0, 2],
+      ["'你这么说让我很不舒服，你可以用更好的方式表达。'先指出问题", 1, 0, 1]
+    ],
+    "fashion91"
+  ],
+  [
+    "伴侣最近连续两周加班到凌晨，你心里隐隐不安。某天决定去公司楼下等，结果看到伴侣和一个异性同事一起走出来，两人有说有笑，那个同事还拍了拍伴侣的肩膀。",
+    "你——",
+    [
+      ["直接走过去，自然地打招呼，看他们什么反应", 2, 0, 0],
+      ["偷偷拍张照，第二天'不经意'提起'昨晚看到你和朋友一起走了'", 0, 2, 0],
+      ["躲在角落纠结要不要现身，心里像有两个小人在打架", 0, 0, 2],
+      ["发消息'我看到你了，回来我们聊聊'，不遮不掩但也不当众对质", 1, 0, 1]
+    ],
+    "nightcity36"
+  ],
+  [
+    "你们一起养的猫突然呕吐不止，你很着急想立刻去医院。伴侣却说'先观察观察吧，可能是毛球，不用太紧张'。",
+    "你会——",
+    [
+      ["'不管怎样先去医院，我带它去。'不再讨论，直接行动", 2, 0, 0],
+      ["'你是不在乎它吧？那当初干嘛要养？'把不满直接说出口", 0, 2, 0],
+      ["'可是它看起来真的很难受……我们还是去看看吧……'语气带着恳求", 0, 0, 2],
+      ["自己先默默查症状，如果判断确实严重，再不带商量地带去", 1, 0, 1]
+    ],
+    "cat62"
+  ],
+  [
+    "你无意中发现伴侣说昨晚加班，其实是在和朋友打牌。虽然不是什么大事，但你心里有一种被欺骗的不适感。",
+    "你怎么办？",
+    [
+      ["'你为什么要骗我？哪怕事情再小，骗就是骗。'", 2, 0, 0],
+      ["'哦，打牌啊，下次编个高级点的理由。'笑着说最扎心的话", 0, 2, 0],
+      ["'是不是因为我管你太多了，你才不敢跟我说实话？'开始自我反思", 0, 0, 2],
+      ["不点破，但以后对方说的话在心里自动打个折扣", 1, 1, 0]
+    ],
+    "cards19"
+  ],
+  [
+    "伴侣当着你的面夸另一个异性：'ta真的好好看/好优秀啊！'语气特别真诚，完全没意识到你的表情变了。",
+    "你——",
+    [
+      ["'嗯，是不错。'然后自然地转移话题，不在这件事上纠缠", 2, 0, 0],
+      ["'那你怎么不跟ta在一起呢？'笑着丢出一颗炸弹", 0, 2, 0],
+      ["跟着笑了笑，但回去后偷偷翻了那个人的社交账号，心里酸酸的", 0, 0, 2],
+      ["沉默不语，明显不高兴，等伴侣自己察觉", 1, 0, 1]
+    ],
+    "compare47"
+  ],
+  [
+    "伴侣又双叒叕答应了你的事没做到——说好周末陪你去看电影，又临时说有事。这已经是这个月第三次了。",
+    "你——",
+    [
+      ["'下次别答应了，做不到就别承诺。'语气平淡但很重", 2, 0, 0],
+      ["'没事啊，我已经习惯了呢~'微笑着说出最扎心的话", 0, 2, 0],
+      ["'没关系的，工作重要……'但眼眶已经红了", 0, 0, 2],
+      ["不说话，默默取消自己为对方准备的所有事情，来而不往非礼也", 1, 1, 0]
+    ],
+    "promise58"
+  ],
+  [
+    "伴侣明确表示不喜欢你的某个好朋友，希望你们少来往。而这个朋友对你来说很重要，是陪伴你很多年的人。",
+    "你的态度是？",
+    [
+      ["'我的朋友我自己选，你管不着。'", 2, 0, 0],
+      ["'哦？那你说说看，为什么不喜欢？我想听听你的理由。'语气里带着审视", 0, 2, 0],
+      ["'那我以后……少跟你提ta好了……'为难地妥协", 0, 0, 2],
+      ["'我们可以各交各的朋友，互相不干涉，但你不能要求我割舍'", 1, 0, 1]
+    ],
+    "friends84"
+  ],
+  [
+    "凌晨两点，伴侣还没回家，电话不接微信不回。你翻了翻朋友圈，发现共同好友发了张酒吧的照片，背景里赫然有伴侣的身影。",
+    "你——",
+    [
+      ["直接去那个酒吧，到了再说", 2, 0, 0],
+      ["在那张照片下评论'这么热闹啊'，让伴侣自己心虚", 0, 2, 0],
+      ["一直盯着手机等消息，脑子里已经上演了无数个版本的画面", 0, 0, 2],
+      ["给共同好友打电话问情况，搞清楚状况再做决定", 1, 0, 1]
+    ],
+    "bar25"
+  ],
+  [
+    "你们一吵架，伴侣就提分手：'要不我们还是分开吧。'这已经是第五次了。而每次吵完，伴侣又说'我不是真心的'。",
+    "这次你又听到了这句话——",
+    [
+      ["'你再说一次分手，我就当真了。我不会再回头。'", 2, 0, 0],
+      ["'行啊，分吧。'然后看对方慌不慌，你赌对方不敢真分", 0, 2, 0],
+      ["'不要！我知道我有时候做得不好，你别走……'又一次妥协", 0, 0, 2],
+      ["'你是不是觉得提分手就能解决一切问题？我们需要认真谈谈这件事'", 1, 0, 1]
+    ],
+    "breakup70"
+  ],
+  [
+    "你们在一起一周年。你提前一周就开始期待，甚至偷偷准备了一份礼物。到了那天，伴侣完全没有任何表示，像最普通的一天一样过去了。",
+    "到了晚上——",
+    [
+      ["直接说'今天是我们在一起一年的日子，你忘了？'", 2, 0, 0],
+      ["什么也不说，第二天发一条仅对方可见的朋友圈：'有些日子，记得的人自然会记得'", 0, 2, 0],
+      ["自己偷偷哭了一场，然后把礼物藏起来，假装什么都没发生", 0, 0, 2],
+      ["主动提出来'走，我订了餐厅，今天可是个大日子'，不给自己留遗憾", 1, 0, 1]
+    ],
+    "anniversary39"
+  ],
+  [
+    "伴侣有一个认识了多年的异性'知己'，他们聊天的频率甚至比你都高，什么话题都聊。当你表达不适时，伴侣说'我们就是朋友，你别多想'。",
+    "你——",
+    [
+      ["'我不是在多想，我是觉得这个边界感有问题。'", 2, 0, 0],
+      ["'知己？有意思。那我算什么？'让这句话在空气里悬着", 0, 2, 0],
+      ["'好吧……那你能不能至少当着我的面聊？我不想偷偷摸摸的感觉'", 0, 0, 2],
+      ["'行，我相信你。'然后暗自去查聊天记录", 1, 1, 0]
+    ],
+    "boundaries53"
+  ],
+  [
+    "你无意间看到伴侣和朋友的聊天记录，里面提到未来的计划——买房、工作安排、生活城市——完全没有提到你。而你们已经在一起两年了。",
+    "你——",
+    [
+      ["直接摊牌：'你的未来规划里没有我？'", 2, 0, 0],
+      ["'哇，原来你已经有计划了，都不跟我说呢~'笑着让对方自己品", 0, 2, 0],
+      ["假装没看到，但这个问题像一根刺一样扎在心里，再也拔不出来", 0, 0, 2],
+      ["找个机会自然地聊到未来话题，试探对方到底怎么想的", 1, 0, 1]
+    ],
+    "future17"
+  ],
+  [
+    "一向坚强的伴侣突然在你面前崩溃大哭，说自己撑不住了，工作、家庭、人际关系全部压过来。你从来没见过ta这样脆弱的一面。",
+    "你的第一反应是——",
+    [
+      ["一把抱住，什么都不说，让对方在自己肩膀上哭够", 2, 0, 0],
+      ["有点慌，但故作镇定：'怎么了？谁欺负你了？我帮你处理。'", 0, 2, 0],
+      ["跟着一起哭了，觉得心疼到不行，比对方还先崩溃", 0, 0, 2],
+      ["'先哭出来，哭完了我们再一件一件想办法解决。'递上纸巾", 1, 0, 1]
+    ],
+    "cry82"
+  ],
+  [
+    "伴侣某天突然认真地看着你问：'如果有一天你发现我骗了你一件很重要的事，你会怎么做？'你感受到ta语气里的犹豫和不安。",
+    "你——",
+    [
+      ["'先告诉我是什么事，然后我们再谈怎么做。'", 2, 0, 0],
+      ["'那你猜猜我会怎么做？'把球踢回去，看对方怎么接", 0, 2, 0],
+      ["'不管什么事……我都可以原谅你的……大概吧。'不确定但先给了承诺", 0, 0, 2],
+      ["'取决于你骗我的动机和这件事的性质，我不能现在给你一个空白的承诺'", 1, 0, 1]
+    ],
+    "secret46"
+  ],
+  [
+    "假设此刻你必须给你们的感情打一个分数（满分100分），不经过任何思考，凭第一直觉——",
+    "你心里跳出来的数字落在哪个区间？",
+    [
+      ["85分以上——虽然不完美，但很稳，我知道自己拥有什么", 2, 0, 0],
+      ["60到84分——说不上多好，但也没到必须结束的程度", 0, 2, 0],
+      ["不到60分——但就是放不下，理智和感情一直在拉扯", 0, 0, 2],
+      ["我拒绝打分——感情不是数字能衡量的，这个问题本身就有问题", 1, 1, 0]
+    ],
+    "score100"
+  ]
+];
 
-        // 打开订阅模态框
-        function openSubscribe() {
-            document.getElementById('subscribe-modal').classList.remove('hidden');
-            document.body.style.overflow = 'hidden';
-        }
+// ==================== 结果解析数据 ====================
+const resultData = {
+  stone: {
+    name: "石头",
+    icon: "fa-mountain",
+    badgeClass: "stone",
+    subtitle: "在感情里，你是那块不会动摇的基石",
+    desc: "你的婚恋人格是「石头」。在感情中，你像一块沉默但坚固的岩石——不擅长甜言蜜语，不会制造浪漫惊喜，但你给出的安全感是实打实的。你信奉'做比说重要'，你的爱藏在每一个实际的行动里：生病时二话不说带你去医院、遇到问题第一时间想办法解决、说了承诺就一定会做到。你不喜欢猜来猜去的情感游戏，有话直说、有事直做是你对感情最基本的尊重。",
+    traits: ["极强的责任感和可靠性", "情绪稳定，不轻易被外界干扰", "直线思维，不喜欢弯弯绕绕", "行动力强，说到做到", "感情中不玩套路，真诚直接"],
+    weaknesses: ["缺乏浪漫细胞，容易让伴侣觉得'无趣'", "不善于表达情感，爱在心里口难开", "过于理性，有时忽视伴侣的情绪需求", "固执，认定的事情很难改变", "不会哄人，吵架时容易冷处理"],
+    loveStyle: "你的爱是'我在'——不需要语言，只需要行动。当你认定一个人时，你的忠诚度几乎是百分之百。但问题在于，你常常以为'我对ta好，ta应该知道'，而忽略了很多人的爱需要被说出口、被看到。",
+    matchGood: [{ name: "布", reason: "布的温柔和包容能补足你的情感盲区，而你的稳定正是布最需要的依靠" }],
+    matchBad: [{ name: "剪刀（吸引力陷阱）", reason: "剪刀的魅力会强烈吸引你，但你很难驾驭剪刀的复杂，容易变成被消耗的一方" }],
+    matchWarn: [{ name: "石头", reason: "两个石头都很稳，但感情可能像白开水一样缺少温度和波澜" }],
+    advice: "学会'说话'。不是让你变成花言巧语的人，而是试着把你心里的在意用语言表达出来。偶尔制造一点小惊喜，哪怕只是一张手写纸条，都会让伴侣感受到巨大的被爱。"
+  },
+  scissors: {
+    name: "剪刀",
+    icon: "fa-scissors",
+    badgeClass: "scissors",
+    subtitle: "在感情里，你是那把让人又爱又怕的剪刀",
+    desc: "你的婚恋人格是「剪刀」。你天生自带一种让人移不开眼的锋利魅力——高情商、会说话、懂得制造情绪波动。你知道什么时候该温柔、什么时候该冷淡，什么时候该给一颗糖、什么时候该抽身一步。你的感情从来不是平静的湖面，而是一场跌宕起伏的戏剧。你提供的是极高的情绪价值，和你在一起的人永远不会觉得'无聊'，但同时也永远无法真正'安心'。",
+    traits: ["极高的情商和社交能力", "天生懂得制造吸引力和神秘感", "敏锐，能快速读懂对方的情绪", "有趣，和你在一切永远不会无聊", "知道如何让人为自己着迷"],
+    weaknesses: ["边界感模糊，容易让伴侣没有安全感", "习惯性'留后路'，让人患得患失", "有时分不清'享受被爱'和'真正爱一个人'", "在感情中可能无意识地操控对方情绪", "容易对稳定的关系感到厌倦"],
+    loveStyle: "你的爱是'你猜'——你享受感情中的拉扯感，暧昧期往往是你最迷人的时候。但进入稳定关系后，你会不自觉地制造一些小风波来确认对方还在乎你。你的爱真实而热烈，但总是带着一层薄薄的雾。",
+    matchGood: [{ name: "石头", reason: "石头不怕你的锋利，能稳住你的飘忽不定，给你一种你从未体验过的踏实感" }],
+    matchBad: [{ name: "布（道德困境）", reason: "布的善良和包容会让你无意识地'欺负'ta，而事后你又愧疚——这是一个伤害循环" }],
+    matchWarn: [{ name: "剪刀", reason: "两个剪刀在一起就是一场高智商博弈，精彩但极度消耗，往往两败俱伤" }],
+    advice: "你最大的课题是学会'安分'。不是让你变得无趣，而是明白——真正的安全感不需要通过制造波动来获得。试着在一个稳定的人面前卸下你的所有技巧，看看真实的自己被接纳是什么感觉。"
+  },
+  paper: {
+    name: "布",
+    icon: "fa-scroll",
+    badgeClass: "paper",
+    subtitle: "在感情里，你是那块温暖但容易被忽视的布",
+    desc: "你的婚恋人格是「布」。你是感情里最温暖、最柔软、最善解人意的存在。你天生具有极强的共情能力，能敏锐感知到对方的情绪变化，并且总是第一时间给予回应和安慰。你的爱是包裹式的——像一个温暖的拥抱，让人觉得被接纳、被理解、被呵护。但问题在于，你的柔软也让你容易失去边界、过度付出、在关系中逐渐模糊自己的形状。",
+    traits: ["极强的共情能力和情感直觉", "温柔体贴，照顾人的能力满分", "善解人意，很少站在对立面", "愿意为感情付出和妥协", "能让对方感受到被深度理解和接纳"],
+    weaknesses: ["缺乏边界感，容易被得寸进尺", "过度付出，忽略自己的需求", "容易患得患失，安全感不足", "不擅长拒绝，常常委屈自己成全对方", "容易被'有故事'的人吸引，然后被消耗"],
+    loveStyle: "你的爱是'你需要什么我都给'——你总是优先考虑对方的感受，甚至到了忘记自己也需要被爱的地步。你的柔软是真正的力量，但前提是你学会在柔软之外长出骨头。",
+    matchGood: [{ name: "石头", reason: "石头给你方向感和绝对的安全感，你给石头温度和柔软——这是最互补的组合" }],
+    matchBad: [{ name: "剪刀（高危警告）", reason: "剪刀会无意识地'剪碎'你，利用你的善良和包容，而你往往意识不到自己在被消耗" }],
+    matchWarn: [{ name: "布", reason: "两个布在一起很温暖，但可能缺乏'主心骨'，关键时刻谁来做决定？" }],
+    advice: "你最大的课题是学会'说不'。你的善良必须带有锋芒。在一段关系里，如果你总是那个退让的人，那这段关系的天平迟早会彻底失衡。记住：你的价值不是由你付出了多少来定义的。"
+  }
+};
 
-        // 关闭订阅模态框
-        function closeSubscribe() {
-            document.getElementById('subscribe-modal').classList.add('hidden');
-            document.body.style.overflow = '';
-        }
+// ==================== 状态管理 ====================
+let currentQ = 0;
+let scores = { stone: 0, scissors: 0, paper: 0 };
+let isTransitioning = false;
 
-        // 数字动画
-        function animateValue(element, start, end, duration) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const value = Math.floor(progress * (end - start) + start);
-                element.textContent = value.toLocaleString();
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
+// ==================== 页面切换 ====================
+function showPage(pageId) {
+  const pages = document.querySelectorAll('.page');
+  pages.forEach(p => {
+    if (!p.classList.contains('hidden')) {
+      p.classList.add('fade-out');
+      setTimeout(() => {
+        p.classList.add('hidden');
+        p.classList.remove('fade-out');
+      }, 400);
+    }
+  });
+  setTimeout(() => {
+    const target = document.getElementById(pageId);
+    target.classList.remove('hidden');
+    target.classList.add('fade-out');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        target.classList.remove('fade-out');
+      });
+    });
+  }, 450);
+}
 
-        // 指标动画 - Intersection Observer
-        const metricsObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const metrics = entry.target.querySelectorAll('.metric-value');
-                    metrics.forEach(metric => {
-                        const target = parseInt(metric.dataset.target);
-                        animateValue(metric, 0, target, 2000);
-                    });
-                    metricsObserver.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.5 });
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
 
-        metricsObserver.observe(document.getElementById('metrics'));
+// ==================== 开始测试 ====================
+function startQuiz() {
+  currentQ = 0;
+  scores = { stone: 0, scissors: 0, paper: 0 };
+  showPage('quizPage');
+  setTimeout(() => renderQuestion(), 500);
+}
 
-        // 时间轴筛选
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const filter = this.dataset.filter;
-                
-                // 更新按钮状态
-                document.querySelectorAll('.filter-btn').forEach(b => {
-                    b.classList.remove('active', 'bg-charcoal', 'text-white');
-                    b.classList.add('border', 'border-border');
-                });
-                this.classList.add('active', 'bg-charcoal', 'text-white');
-                this.classList.remove('border', 'border-border');
-                
-                // 筛选项目
-                document.querySelectorAll('.timeline-item').forEach(item => {
-                    if (filter === 'all' || item.dataset.type === filter) {
-                        item.style.display = '';
-                        item.style.opacity = '1';
-                    } else {
-                        item.style.opacity = '0';
-                        setTimeout(() => {
-                            item.style.display = filter === 'all' ? '' : 'none';
-                        }, 300);
-                    }
-                });
-            });
-        });
+// ==================== 渲染题目 ====================
+function renderQuestion() {
+  const q = questions[currentQ];
+  const card = document.getElementById('quizCard');
+  const img = document.getElementById('quizImage');
+  const scenario = document.getElementById('quizScenario');
+  const question = document.getElementById('quizQuestion');
+  const optionsList = document.getElementById('optionsList');
+  const counter = document.getElementById('quizCounter');
+  const progress = document.getElementById('progressFill');
 
-        // ESC 关闭模态框
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeProject();
-                closeSubscribe();
-            }
-        });
+  // 更新进度
+  const pct = ((currentQ) / questions.length) * 100;
+  progress.style.width = pct + '%';
+  counter.textContent = `${currentQ + 1} / ${questions.length}`;
 
-        // 平滑滚动
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function(e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            });
-        });
-    </script>
+  // 更新图片
+  img.src = `https://picsum.photos/seed/${q[3]}/700/400`;
+
+  // 更新文字
+  scenario.textContent = q[0];
+  question.textContent = q[1];
+
+  // 更新选项
+  const labels = ['A', 'B', 'C', 'D'];
+  optionsList.innerHTML = q[2].map((opt, i) => `
+    <button class="option-btn" onclick="selectOption(${i})" aria-label="选项${labels[i]}">
+      <span class="option-text-wrap">
+        <span class="option-label">${labels[i]}</span>
+        <span>${opt[0]}</span>
+      </span>
+    </button>
+  `).join('');
+
+  // 入场动画
+  card.classList.remove('slide-out');
+  card.classList.add('slide-in');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      card.classList.remove('slide-in');
+    });
+  });
+
+  isTransitioning = false;
+}
+
+// ==================== 选择选项 ====================
+function selectOption(index) {
+  if (isTransitioning) return;
+  isTransitioning = true;
+
+  const q = questions[currentQ];
+  const opt = q[2][index];
+
+  // 计分
+  scores.stone += opt[1];
+  scores.scissors += opt[2];
+  scores.paper += opt[3];
+
+  // 选中效果
+  const btns = document.querySelectorAll('.option-btn');
+  btns[index].classList.add('selected');
+
+  // 延迟后切换下一题
+  setTimeout(() => {
+    const card = document.getElementById('quizCard');
+    card.classList.add('slide-out');
+
+    setTimeout(() => {
+      currentQ++;
+      if (currentQ < questions.length) {
+        renderQuestion();
+      } else {
+        // 更新进度到100%
+        document.getElementById('progressFill').style.width = '100%';
+        setTimeout(() => showResult(), 300);
+      }
+    }, 400);
+  }, 500);
+}
+
+// ==================== 显示结果 ====================
+function showResult() {
+  showPage('resultPage');
+  setTimeout(() => renderResult(), 550);
+}
+
+function renderResult() {
+  const total = scores.stone + scores.scissors + scores.paper;
+  const pctStone = Math.round((scores.stone / total) * 100);
+  const pctScissors = Math.round((scores.scissors / total) * 100);
+  const pctPaper = Math.round((scores.paper / total) * 100);
+
+  // 判断主类型
+  const sorted = [
+    { key: 'stone', score: scores.stone, pct: pctStone },
+    { key: 'scissors', score: scores.scissors, pct: pctScissors },
+    { key: 'paper', score: scores.paper, pct: pctPaper }
+  ].sort((a, b) => b.score - a.score);
+
+  const primary = sorted[0];
+  const secondary = sorted[1];
+  const isMix = (primary.score - secondary.score) <= 8; // 分差小于等于8视为混合型
+
+  const container = document.getElementById('resultContent');
+
+  let typeBadge, typeName, typeIcon, badgeClass;
+
+  if (isMix) {
+    const mixNames = { stone: '石', scissors: '剪', paper: '布' };
+    typeName = mixNames[primary.key] + mixNames[secondary.key] + '混合型';
+    typeIcon = 'fa-shuffle';
+    badgeClass = 'mix';
+  } else {
+    const rd = resultData[primary.key];
+    typeName = rd.name;
+    typeIcon = rd.icon;
+    badgeClass = rd.badgeClass;
+  }
+
+  // 构建结果HTML
+  let html = `
+    <div class="result-type-badge ${badgeClass}">
+      <i class="fas ${typeIcon}"></i>
+      <span>${typeName}</span>
+    </div>
+    <p class="result-subtitle">${isMix ? '你的人格在两种类型之间游走，拥有更丰富的情感面向' : resultData[primary.key].subtitle}</p>
+  `;
+
+  // 分数条
+  html += `
+    <div class="score-bars">
+      <div class="score-bar-item">
+        <div class="score-bar-label">
+          <span style="color:var(--stone)"><i class="fas fa-mountain" style="margin-right:6px"></i>石头</span>
+          <span>${pctStone}%</span>
+        </div>
+        <div class="score-bar-track">
+          <div class="score-bar-value stone" id="barStone"></div>
+        </div>
+      </div>
+      <div class="score-bar-item">
+        <div class="score-bar-label">
+          <span style="color:var(--scissors)"><i class="fas fa-scissors" style="margin-right:6px"></i>剪刀</span>
+          <span>${pctScissors}%</span>
+        </div>
+        <div class="score-bar-track">
+          <div class="score-bar-value scissors" id="barScissors"></div>
+        </div>
+      </div>
+      <div class="score-bar-item">
+        <div class="score-bar-label">
+          <span style="color:var(--paper)"><i class="fas fa-scroll" style="margin-right:6px"></i>布</span>
+          <span>${pctPaper}%</span>
+        </div>
+        <div class="score-bar-track">
+          <div class="score-bar-value paper" id="barPaper"></div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  if (isMix) {
+    // 混合型解析
+    const rd1 = resultData[primary.key];
+    const rd2 = resultData[secondary.key];
+    const mixNames = { stone: '石头', scissors: '剪刀', paper: '布' };
+
+    html += `
+      <div class="result-section">
+        <h3><i class="fas fa-fingerprint" style="color:var(--accent)"></i> 你的双重人格画像</h3>
+        <p>你的测试结果显示出明显的${mixNames[primary.key]}和${mixNames[secondary.key]}特质。这意味着你在感情中拥有两种截然不同的面向——</p>
+        <p style="margin-top:0.75rem"><strong style="color:var(--${primary.key === 'stone' ? 'stone' : primary.key === 'scissors' ? 'scissors' : 'paper'})">${mixNames[primary.key]}面（${primary.pct}%）：</strong>${rd1.desc.substring(0, 80)}……</p>
+        <p style="margin-top:0.5rem"><strong style="color:var(--${secondary.key === 'stone' ? 'stone' : secondary.key === 'scissors' ? 'scissors' : 'paper'})">${mixNames[secondary.key]}面（${secondary.pct}%）：</strong>${rd2.desc.substring(0, 80)}……</p>
+        <p style="margin-top:0.75rem">这种混合让你在亲密关系中更加立体，但也意味着你有时候会在两种模式之间摇摆不定——有时候果断直接，有时候又会柔软退让，连你自己都搞不清哪个才是'真正的自己'。</p>
+      </div>
+      <div class="result-section">
+        <h3><i class="fas fa-yin-yang" style="color:var(--accent)"></i> 你的核心矛盾</h3>
+        <p>混合型人格最大的挑战在于'一致性'。你的伴侣可能会觉得你'像变了一个人'——上一秒还在讲道理，下一秒就开始共情；有时候坚定得像石头，有时候又柔软得像布。这不是缺点，但你需要让伴侣理解：这两个面都是真实的你。</p>
+      </div>
+      <div class="result-section">
+        <h3><i class="fas fa-heart" style="color:var(--scissors)"></i> 匹配建议</h3>
+        <p style="margin-bottom:0.75rem">你的混合特质让你比单一类型有更广的适配范围，但也要特别注意：</p>
+        <div>
+          <span class="match-tag good">最佳：${rd1.matchGood[0].name}</span>
+          <span class="match-tag warn">谨慎：${mixNames[secondary.key]}型</span>
+          <span class="match-tag bad">警惕：${rd1.matchBad[0].name}</span>
+        </div>
+        <p style="margin-top:0.75rem">${rd1.matchGood[0].reason}</p>
+      </div>
+      <div class="result-section">
+        <h3><i class="fas fa-compass" style="color:var(--accent)"></i> 给你的建议</h3>
+        <p>接纳自己的两面性，不要试图只保留'好'的那一面。你需要找到一个能看到你全部面貌、并且都接受的伴侣。同时，在关系初期就坦诚自己的这种'双模'特质，避免对方因为预期落差而产生不信任。</p>
+      </div>
+    `;
+  } else {
+    // 单一类型解析
+    const rd = resultData[primary.key];
+
+    html += `
+      <div class="result-section">
+        <h3><i class="fas fa-fingerprint" style="color:var(--accent)"></i> 你的人格画像</h3>
+        <p>${rd.desc}</p>
+      </div>
+      <div class="result-section">
+        <h3><i class="fas fa-star" style="color:var(--accent-glow)"></i> 你的核心优势</h3>
+        <ul>${rd.traits.map(t => `<li>${t}</li>`).join('')}</ul>
+      </div>
+      <div class="result-section">
+        <h3><i class="fas fa-triangle-exclamation" style="color:var(--scissors)"></i> 你的潜在盲区</h3>
+        <ul>${rd.weaknesses.map(w => `<li>${w}</li>`).join('')}</ul>
+      </div>
+      <div class="result-section">
+        <h3><i class="fas fa-heart-pulse" style="color:var(--scissors)"></i> 你的恋爱模式</h3>
+        <p>${rd.loveStyle}</p>
+      </div>
+      <div class="result-section">
+        <h3><i class="fas fa-puzzle-piece" style="color:var(--paper)"></i> 匹配分析</h3>
+        <div style="margin-bottom:0.75rem">
+          ${rd.matchGood.map(m => `<span class="match-tag good">最佳匹配：${m.name}</span>`).join('')}
+          ${rd.matchBad.map(m => `<span class="match-tag bad">危险匹配：${m.name}</span>`).join('')}
+          ${rd.matchWarn.map(m => `<span class="match-tag warn">需要注意：${m.name}</span>`).join('')}
+        </div>
+        <p style="margin-bottom:0.5rem"><strong style="color:#4ade80">为什么${rd.matchGood[0].name}最适合你：</strong>${rd.matchGood[0].reason}</p>
+        <p style="margin-bottom:0.5rem"><strong style="color:#f87171">为什么${rd.matchBad[0].name}很危险：</strong>${rd.matchBad[0].reason}</p>
+        <p><strong style="color:#facc15">关于${rd.matchWarn[0].name}：</strong>${rd.matchWarn[0].reason}</p>
+      </div>
+      <div class="result-section">
+        <h3><i class="fas fa-compass" style="color:var(--accent)"></i> 成长建议</h3>
+        <p>${rd.advice}</p>
+      </div>
+    `;
+  }
+
+  html += `
+    <button class="btn-restart" onclick="restartQuiz()">
+      <i class="fas fa-rotate-right" style="margin-right:8px"></i>重新测试
+    </button>
+    <p style="color:var(--text-muted); margin-top:1rem; font-size:0.75rem; opacity:0.5; text-align:center;">
+      本测试仅供娱乐参考，不构成任何专业心理建议
+    </p>
+  `;
+
+  container.innerHTML = html;
+
+  // 延迟启动分数条动画
+  setTimeout(() => {
+    const barStone = document.getElementById('barStone');
+    const barScissors = document.getElementById('barScissors');
+    const barPaper = document.getElementById('barPaper');
+    if (barStone) barStone.style.width = pctStone + '%';
+    if (barScissors) barScissors.style.width = pctScissors + '%';
+    if (barPaper) barPaper.style.width = pctPaper + '%';
+  }, 100);
+
+  // 滚动到顶部
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==================== 重新测试 ====================
+function restartQuiz() {
+  showPage('startPage');
+}
+
+// ==================== 键盘支持 ====================
+document.addEventListener('keydown', (e) => {
+  if (document.getElementById('quizPage').classList.contains('hidden')) return;
+  if (isTransitioning) return;
+
+  const keyMap = { 'a': 0, 'b': 1, 'c': 2, 'd': 3, '1': 0, '2': 1, '3': 2, '4': 3 };
+  const idx = keyMap[e.key.toLowerCase()];
+  if (idx !== undefined) {
+    selectOption(idx);
+  }
+});
+</script>
 </body>
 </html>
